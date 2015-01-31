@@ -9,9 +9,10 @@ float diff_1 = 0;
 static float THRESHOLD = 18;
 int cooldown = 0;
 static int CoolTime = 10; //how many loops to keep the danger condition 
+int dangerCount = 0;
 
 void setup() {
-  size(800, 400);
+  size(1200, 600);
   background(255);
   noFill();
   stroke(0);
@@ -81,21 +82,28 @@ void processData(int[] data){
   int feature_channel = 6;
   float current = map(data[feature_channel], -128, 127, 0, 50);
   diff_1 = last-current;
-  println(diff_1);
-  println("");
   last = current;
 
-  if ((diff_1 > THRESHOLD|| diff_1<-THRESHOLD) && read){
-    println("DANGER!");
-    c = color(255, 0, 0);
+  if ((diff_1 > THRESHOLD || diff_1<-THRESHOLD) && read){
     cooldown = CoolTime;
+    dangerCount+=2;
   }else if(cooldown>0){
     c = color(255, 0, 0);
     cooldown--;
   }else{
     c = color(0, 255, 0);
+    if (dangerCount>=0)
+      dangerCount = 0;
+    else
+      dangerCount--;
   }
-  //println(abs(diff_1));
+  
+  if (dangerCount>=3){
+        println("DANGER!");
+    c = color(255, 0, 0);
+  }
+  
+  println(dangerCount);
 }
 
 //todo swith to myoOnUnLock
