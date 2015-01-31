@@ -1,0 +1,1 @@
+for osx move myo.framework to library/frameworks
