@@ -6,9 +6,9 @@ boolean read = false;
 color c;
 float last = 0;
 float diff_1 = 0;
-static float THRESHOLD = 15;
+static float THRESHOLD = 18;
 int cooldown = 0;
-static int CoolTime = 6; //how many loops to keep the danger condition 
+static int CoolTime = 10; //how many loops to keep the danger condition 
 
 void setup() {
   size(800, 400);
@@ -43,7 +43,7 @@ void draw() {
       for(int i=0; i<8; i++){
         if(!sensors.get(i).isEmpty()){
           beginShape();
-          for(int j=0; j<sensors.get(i).size(); j++){
+          for(int j=06; j<sensors.get(i).size(); j++){
             vertex(j, sensors.get(i).get(j)+(i*50));
           }
           endShape();
@@ -81,14 +81,17 @@ void processData(int[] data){
   int feature_channel = 6;
   float current = map(data[feature_channel], -128, 127, 0, 50);
   diff_1 = last-current;
-  println(current);
-  println(last);
+  println(diff_1);
   println("");
   last = current;
 
-  if (diff_1 > THRESHOLD && read){
+  if ((diff_1 > THRESHOLD|| diff_1<-THRESHOLD) && read){
     println("DANGER!");
     c = color(255, 0, 0);
+    cooldown = CoolTime;
+  }else if(cooldown>0){
+    c = color(255, 0, 0);
+    cooldown--;
   }else{
     c = color(0, 255, 0);
   }
