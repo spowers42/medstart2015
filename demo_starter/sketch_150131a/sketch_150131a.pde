@@ -3,6 +3,12 @@ import de.voidplus.myo.*;
 Myo myo;
 ArrayList<ArrayList<Integer>> sensors;
 boolean read = false;
+color c;
+float last = 0;
+float diff_1 = 0;
+static float THRESHOLD = 15;
+int cooldown = 0;
+static int CoolTime = 6; //how many loops to keep the danger condition 
 
 void setup() {
   size(800, 400);
@@ -18,6 +24,8 @@ void setup() {
   myo.withEmg();
   // myo.withoutEmg();
   
+  c = color(200, 200, 200);
+  
   sensors = new ArrayList<ArrayList<Integer>>();
   for(int i=0; i<8; i++){
     sensors.add(new ArrayList<Integer>()); 
@@ -25,11 +33,10 @@ void setup() {
 }
 
 void draw() {
-  if (read==true){
-    background(255);
-  }else{
-    background(200);
+  if (read!=true){
+    c = color(200, 200, 200);
   }
+  background(c);
   // ...
   if (read==true){
     synchronized (this){
@@ -53,7 +60,12 @@ void myoOnEmg(Myo myo, long timestamp, int[] data) {
   // int[] data <- 8 values from -128 to 127
   
   synchronized (this){
+      if (read==true){
+        processData(data);
+      }
+    
     for(int i = 0; i<data.length; i++){
+
       sensors.get(i).add((int) map(data[i], -128, 127, 0, 50)); // [-128 - 127]
     }
     while(sensors.get(0).size() > width){
@@ -64,30 +76,32 @@ void myoOnEmg(Myo myo, long timestamp, int[] data) {
   }
 }
 
-// ----------------------------------------------------------
 
-/*
-void myoOn(Myo.Event event, Myo myo, long timestamp) {
-  switch(event) {
-  case EMG:
-     println("myoOn EMG");
-    // int[] data <- 8 values from -128 to 127
-    int[] data = myo.getEmg();
-    for(int i = 0; i<data.length; i++){
-      println(data[i]); // [-128 - 127] 
-    }
-    break;
+void processData(int[] data){
+  int feature_channel = 6;
+  float current = map(data[feature_channel], -128, 127, 0, 50);
+  diff_1 = last-current;
+  println(current);
+  println(last);
+  println("");
+  last = current;
+
+  if (diff_1 > THRESHOLD && read){
+    println("DANGER!");
+    c = color(255, 0, 0);
+  }else{
+    c = color(0, 255, 0);
   }
+  //println(abs(diff_1));
 }
-*/
 
+//todo swith to myoOnUnLock
 void myoOnPose(Myo myo, long timestamp, Pose pose) {
   println("Sketch: myoOnPose");
   switch (pose.getType()) {
 
-  case FIST:
-    println("handling double tap");
-    println(read);
+  case WAVE_IN:
+    println("handling wave");
     if (read==false){
       myo.withEmg();
       read=true;
@@ -104,4 +118,7 @@ void myoOnPose(Myo myo, long timestamp, Pose pose) {
   }
 }
 
+void danger(Myo myo){
+  myo.vibrate();
+}
 
