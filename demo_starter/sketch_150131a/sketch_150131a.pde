@@ -9,6 +9,7 @@ float diff_1 = 0;
 static float THRESHOLD = 18;
 int cooldown = 0;
 static int CoolTime = 10; //how many loops to keep the danger condition 
+int vibrationCooldown = 0;
 int dangerCount = 0;
 
 void setup() {
@@ -42,7 +43,7 @@ void draw() {
   if (read==true){
     synchronized (this){
       for(int i=0; i<8; i++){
-        if(!sensors.get(i).isEmpty()){
+        if(!sensors.get(i).isEmpty() && i<5){
           beginShape();
           for(int j=06; j<sensors.get(i).size(); j++){
             vertex(j, sensors.get(i).get(j)+(i*50));
@@ -61,9 +62,9 @@ void myoOnEmg(Myo myo, long timestamp, int[] data) {
   // int[] data <- 8 values from -128 to 127
   
   synchronized (this){
-      if (read==true){
-        processData(data);
-      }
+    if (read==true){
+      processData(data);
+    }
     
     for(int i = 0; i<data.length; i++){
 
@@ -85,6 +86,10 @@ void processData(int[] data){
   last = current;
 
   if ((diff_1 > THRESHOLD || diff_1<-THRESHOLD) && read){
+    if (vibrationCooldown == 0){
+      myo.vibrate();
+      vibrationCooldown=20;
+    }
     cooldown = CoolTime;
     dangerCount+=2;
   }else if(cooldown>0){
@@ -99,10 +104,15 @@ void processData(int[] data){
   }
   
   if (dangerCount>=3){
-        println("DANGER!");
+    println("DANGER!");
+    if (vibrationCooldown == 0){
+      myo.vibrate();
+      vibrationCooldown=800;
+    }
     c = color(255, 0, 0);
   }
-  
+  if (vibrationCooldown>0)
+    vibrationCooldown--;
   println(dangerCount);
 }
 
@@ -121,7 +131,6 @@ void myoOnPose(Myo myo, long timestamp, Pose pose) {
       myo.withoutEmg();
       read=false;
     }
-    println("Pose: DOUBLE_TAP");
     break;
 
   default:
@@ -129,7 +138,5 @@ void myoOnPose(Myo myo, long timestamp, Pose pose) {
   }
 }
 
-void danger(Myo myo){
-  myo.vibrate();
-}
+
 
